@@ -1,0 +1,25 @@
+name: pos-service
+services:
+  mysql:
+    # use this for mac
+    platform: linux/amd64
+    image: mysql:8.0.26
+
+    # use this for linux
+    # platform: linux/x86_64
+    # image: mysql:8.0.26
+
+    # ======================= #
+    restart: on-failure
+    ports:
+      - "3306:3306"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - pos-service-my-sql-volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_TCP_PORT: 3306
+      MYSQL_DATABASE: pos_service_db
+
+volumes:
+  pos-service-my-sql-volume:
