@@ -47,6 +47,10 @@ export const fetchOrderList = async (param) => {
         where.created_by = param.created_by
     }
 
+    if(param.branch_id) {
+        where.fk_branch_id = param.branch_id
+    }
+
     const rows = await Order.findAll({
         where,
         attributes: [
