@@ -22,7 +22,7 @@ const rest = express();
 
 export const initServer = () => {
     rest.use(cors({
-        origin: ['http://localhost:5173', 'http://localhost:5174'], // ganti dengan origin yang diizinkan
+        origin: ['http://localhost:5173', 'http://localhost:5174', 'https://internalposnurchs.up.railway.app/', 'https://nurchs.up.railway.app/'], // ganti dengan origin yang diizinkan
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         credentials: true
     }))
@@ -156,7 +156,7 @@ export const initServer = () => {
 }
 
 export const runServer = () => {
-    rest.listen(3000, () => {
+    rest.listen(process.env.PORT, () => {
         console.info("Server listening on port 3000");
     })
 }
