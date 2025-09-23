@@ -2,6 +2,7 @@ import {errorResponse} from "../infrastructure/rest/response.js";
 import {ConflictException} from "../exception/conflict.exception.js";
 import {NotFoundException} from "../exception/not.found.exception.js";
 import {BadRequestException} from "../exception/bad.request.exception.js";
+import {UnauthorizedException} from "../exception/unauthorized.exception.js";
 
 export const errorMiddleware = async (err, req, res, next) => {
     switch (true) {
@@ -10,6 +11,9 @@ export const errorMiddleware = async (err, req, res, next) => {
             break;
         case err instanceof NotFoundException:
             res.status(404).send(errorResponse(err.message));
+            break;
+        case err instanceof UnauthorizedException:
+            res.status(401).send(errorResponse(err.message));
             break;
         case err instanceof BadRequestException:
             res.status(400).send(errorResponse(err.message));

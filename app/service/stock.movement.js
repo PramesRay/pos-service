@@ -1,7 +1,8 @@
-import {InventoryItem, StockMovement, WarehouseShift} from "../model/model.js";
+import {Branch, InventoryItem, StockMovement, WarehouseShift} from "../model/model.js";
 import {sequelize} from "../../infrastructure/database/mysql.js";
+import { ConflictException } from "../../exception/conflict.exception.js";
 
-const create = async (param) => {
+const create = async (param, authUser) => {
     // get current warehouse shift
     const warehouseShift = await WarehouseShift.findOne(
         {
@@ -27,34 +28,36 @@ const create = async (param) => {
             description: param.description,
             status: param.status,
             time: param.time,
+            created_by: authUser.id,
+            updated_by: authUser.id,
         }, {
             transaction: tx,
         })
 
         switch (param.status) {
             case "Masuk":
-                await addInventoryItem(param.item.id, param.item.quantity, tx)
+                await addInventoryItem(param.item.id, param.item.quantity, tx, authUser)
                 break;
 
             case "Keluar":
-                await deductInventoryItem(param.item.id, param.item.quantity, tx)
+                await deductInventoryItem(param.item.id, param.item.quantity, tx, authUser)
                 break;
             case "Pengurangan":
-                await deductInventoryItem(param.item.id, param.item.quantity, tx)
+                await deductInventoryItem(param.item.id, param.item.quantity, tx, authUser)
                 break;
         }
 
         await tx.commit();
 
-        return stockMovement;
+        return stockMovement
     } catch (error) {
         await tx.rollback();
         throw error;
     }
 }
 
-const addInventoryItem = async (id, quantity, tx) => {
-    const inventoryItem = InventoryItem.findOne(
+const addInventoryItem = async (id, quantity, tx, authUser) => {
+    const inventoryItem = await InventoryItem.findOne(
         {
             where: {
                 id: id,
@@ -62,16 +65,21 @@ const addInventoryItem = async (id, quantity, tx) => {
         }
     )
 
-    if (!InventoryItem) {
+    if (!inventoryItem) {
         throw new Error("Inventory item not found")
     }
 
+    if (inventoryItem.is_new) {
+        inventoryItem.is_new = false
+    }
     inventoryItem.quantity += quantity
+    inventoryItem.created_by = authUser.id
+    inventoryItem.updated_by = authUser.id
     await inventoryItem.save({transaction: tx})
 }
 
-const deductInventoryItem = async (id, quantity, tx) => {
-    const inventoryItem = InventoryItem.findOne(
+const deductInventoryItem = async (id, quantity, tx, authUser) => {
+    const inventoryItem = await InventoryItem.findOne(
         {
             where: {
                 id: id,
@@ -79,15 +87,21 @@ const deductInventoryItem = async (id, quantity, tx) => {
         }
     )
 
-    if (!InventoryItem) {
+    if (!inventoryItem) {
         throw new Error("Inventory item not found")
+    }
+
+    if (inventoryItem.quantity < quantity) {
+        throw new ConflictException("Insufficient inventory item quantity")
     }
 
     inventoryItem.quantity -= quantity
+    inventoryItem.created_by = authUser.id
+    inventoryItem.updated_by = authUser.id
     await inventoryItem.save({transaction: tx})
 }
 
-const update = async (param) => {
+const update = async (param, authUser) => {
     // get stock movement
     const stockMovement = await StockMovement.findOne(
         {
@@ -96,6 +110,10 @@ const update = async (param) => {
             }
         }
     )
+
+    if (!stockMovement) {
+        throw new Error("Stock movement not found")
+    }
 
     // get inventory item
     const inventoryItem = await InventoryItem.findOne(
@@ -106,7 +124,11 @@ const update = async (param) => {
         }
     )
 
-    switch (inventoryItem.status) {
+    if (!inventoryItem) {
+        throw new Error("inventory item not found")
+    }
+
+    switch (stockMovement.status) {
         case "Masuk":
             inventoryItem.quantity -= stockMovement.quantity
             break;
@@ -117,10 +139,6 @@ const update = async (param) => {
         case "Pengurangan":
             inventoryItem.quantity += stockMovement.quantity
             break;
-    }
-
-    if (!stockMovement) {
-        throw new Error("Stock movement not found")
     }
 
     // start transaction
@@ -134,7 +152,9 @@ const update = async (param) => {
             description: param.description,
             status: param.status,
             time: param.time,
+            updated_by: authUser.id,
         })
+        await stockMovement.save({transaction: tx})
 
         switch (param.status) {
             case "Masuk":
@@ -149,19 +169,19 @@ const update = async (param) => {
                 break;
         }
 
-        await stockMovement.save({transaction: tx})
+        inventoryItem.updated_by = authUser.id
         await inventoryItem.save({transaction: tx})
 
         await tx.commit();
 
-        return stockMovement;
+        return stockMovement
     } catch (error) {
         await tx.rollback();
         throw error;
     }
 }
 
-const del = async (param) => {
+const del = async (param, authUser) => {
     // find stock movement
     const stockMovement = await StockMovement.findOne(
         {
@@ -170,6 +190,10 @@ const del = async (param) => {
             }
         }
     )
+
+    if (!stockMovement) {
+        throw new Error("Stock movement not found")
+    }
 
     // find Inventory Item
     const inventoryItem = await InventoryItem.findOne(
@@ -180,7 +204,11 @@ const del = async (param) => {
         }
     )
 
-    switch (inventoryItem.status) {
+    if (!inventoryItem) {
+        throw new Error("inventory item not found")
+    }
+
+    switch (stockMovement.status) {
         case "Masuk":
             inventoryItem.quantity -= stockMovement.quantity
             break;
@@ -204,6 +232,7 @@ const del = async (param) => {
             transaction: tx,
         })
 
+        inventoryItem.updated_by = authUser.id
         await inventoryItem.save({transaction: tx})
 
         await tx.commit();
@@ -213,8 +242,43 @@ const del = async (param) => {
     }
 }
 
+const fetchList = async () => {
+    const rows = await StockMovement.findAll({
+        include: [
+            {model: WarehouseShift, as: "warehouseShift"},
+            {model: InventoryItem, as: "inventoryItem"},
+            {model: Branch, as: "branch"},
+        ],
+        order: [['createdAt', 'DESC']],
+    })
+
+    return rows.map((row) => {
+        return {
+            id: row.id,
+            shift_warehouse: row.warehouseShift.id,
+            description: row.description,
+            status: row.status,
+            time: row.time,
+            item: {
+                id: row.inventoryItem.id,
+                name: row.inventoryItem.name,
+                unit: row.inventoryItem.unit,
+                quantity: row.quantity
+            },
+            branch: row.branch,
+            meta: {
+                created_at: row.createdAt,
+                created_by: row.createdBy,
+                updated_at: row.updatedAt,
+                last_updated_by: row.updatedBy,
+            }
+        }
+    })
+}
+
 export default {
     create,
     update,
-    del
+    del,
+    fetchList
 }

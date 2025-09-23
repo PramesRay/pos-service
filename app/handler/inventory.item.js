@@ -3,13 +3,13 @@ import {successResponse} from "../../infrastructure/rest/response.js";
 
 const create = async (req, res) => {
     const param = req.body
-    const item = await serviceInventoryItem.create(param)
+    const item = await serviceInventoryItem.create(param, req.user.profile)
     res.status(201).json(successResponse("successfully create item", item))
 }
 
 const update = async (req, res) => {
     const param = req.body
-    const item = await serviceInventoryItem.update(param)
+    const item = await serviceInventoryItem.update(param, req.user.profile)
     res.status(200).json(successResponse("successfully update item", item))
 }
 
@@ -19,8 +19,14 @@ const del = async (req, res) => {
     res.status(200).json(successResponse("successfully delete item", null))
 }
 
+const fetchList = async (req, res) => {
+    const list = await serviceInventoryItem.fetchList()
+    res.status(200).json(successResponse("successfully fetch item list", list))
+}
+
 export default {
     create,
     update,
-    del
+    del,
+    fetchList
 }
