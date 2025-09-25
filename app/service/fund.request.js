@@ -53,6 +53,7 @@ const create = async (param, authUser) => {
             id: prefixId("fun-req", fundRequest.id),
         }
     } catch (error) {
+        await tx.rollback()
         throw error;
     }
 }
@@ -98,11 +99,14 @@ const updateFundRequest = async (payload, authUser) => {
             }
         }
 
+        await tx.commit()
+
         return {
             ...fundRequest.toJSON(),
             id: prefixId("fun-req", fundRequest.id),
         }
     } catch (error) {
+        await tx.rollback()
         throw error;
     }
 }
@@ -200,16 +204,48 @@ const del = async (itemId) => {
 
         await tx.commit()
     } catch (error) {
+        await tx.rollback()
         throw error;
-        ƒ
+    }
+}
+
+const finish = async (payload, authUser) => {
+    const idNumber = decodePrefixedId(payload.id).idNumber;
+    const fundRequest = await FundRequest.findByPk(idNumber);
+    if (!fundRequest) {
+        throw new Error("fund request not found")
+    }
+
+    const fundRequestItems = await FundRequestItem.findAll({
+        where: {
+            fk_fund_request_id: payload.id,
+        }
+    })
+
+    const tx = await sequelize.transaction();
+
+    try {
+        // update fund request
+        fundRequest.status = "Selesai"
+        fundRequest.updated_by = authUser.id
+        await fundRequest.save({transaction: tx})
+
+        await tx.commit();
+        return {
+            ...fundRequest.toJSON(),
+            id: fundRequest.id,
+            items: fundRequestItems
+        };
+    } catch (error) {
+        await tx.rollback();
+        throw error;
     }
 }
 
 const STATUS_PRIORITY_CASE = `
     CASE
         WHEN fund_requests.status = 'Pending' THEN 0
-        WHEN fund_requests.status IN ('Ditolak', 'Disetujui') THEN 1
-        ELSE 4
+        ELSE 1
     END
 `
 
@@ -227,7 +263,7 @@ const fetchList = async () => {
             [
                 sequelize.literal(`
                     CASE 
-                        WHEN fund_requests.status IN ('Ditolak', 'Disetujui') THEN fund_requests.createdAt
+                        WHEN fund_requests.status <> 'Pending' THEN fund_requests.createdAt
                     END
                 `), "DESC"
             ],
@@ -277,6 +313,7 @@ const fetchList = async () => {
 export default {
     create,
     update,
+    finish,
     del,
     fetchList
 }

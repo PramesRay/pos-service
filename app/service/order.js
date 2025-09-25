@@ -44,7 +44,12 @@ const getActor = (user) => {
 export const fetchOrderList = async (param) => {
     let where = {};
     if(param.created_by) {
-        where.created_by = param.created_by
+        where.created_by = param.created_by;
+
+        const customer = await Customer.findOne({
+            where: { fk_user_id: param.created_by }
+        })
+        if(customer) where.fk_customer_id = customer.id
     }
 
     if(param.branch_id) {
@@ -175,7 +180,6 @@ export const createOrder = async (param, authUser) => {
         where
     })
 
-    console.log('activeOrder', activeOrder)
 
     if (activeOrder) {
       throw new ConflictException(`Table number ${param.table_number} is already in use`)
@@ -187,21 +191,23 @@ export const createOrder = async (param, authUser) => {
                 fk_kitchen_shift_id: activeKitchenShift.id,
                 end_stock: {[Op.gt]: 0}
             },
-            include: [{model: Menu, as: "menu"}],
-            transaction: tx
+            include: [{model: Menu, as: "menu"}]
         })
 
         if (kitchenShiftDetails.length < 1) {
             throw new ConflictException("No menu available")
         }
 
+        console.log('kitchenShiftDetails', kitchenShiftDetails)
         const unavailableMenu =
             kitchenShiftDetails.find(detail =>
                 orderItem.some(it => it.item_id === detail.fk_menu_id && it.quantity > detail.end_stock)
             );
 
+        console.log('unavailableMenu', unavailableMenu)
+
         if (unavailableMenu) {
-            throw new ConflictException(`Not enough ${unavailableMenu.menu.name} available`);
+            throw new ConflictException(`Not enough ${unavailableMenu} available`);
         }
 
         const order = await createOrderAndOrderItem(param, customer, orderItem, activeKitchenShift, activeCashierShift, tx, authUser.user.id)
@@ -264,7 +270,6 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
         }
       })
       
-      console.log('existingActiveOrder', existingActiveOrder)
       if (existingActiveOrder) {
         throw new ConflictException("Masih ada pembayaran yang belum diselesaikan, selesaikan pembayaran terlebih dahulu.");
       }
@@ -298,8 +303,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
             where: {
                 fk_kitchen_shift_id: activeKitchenShift.id,
                 end_stock: {[Op.gt]: 0}
-            },
-            transaction: tx
+            }
         })
 
         if (kitchenShiftDetails.length < 1) {
@@ -326,7 +330,6 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
           items: order.items
         }
 
-        console.log('midtransPayload', midtransPayload)
         const transaction = await generateMidtransToken(midtransPayload)
         if (!transaction) throw new BadRequestException("Failed to generate midtrans transaction")
 
@@ -675,7 +678,6 @@ const updateOrderPayment = async (payload, userId) => {
         
         orderData.updated_by = userId;
         if (orderData.status === 'Tersaji') orderData.status = 'Selesai';
-        console.log('orderData update', orderData)
         await orderData.save({ transaction: tx });
         await orderData.reload({
             include: [{ model: OrderPayment, as: 'payment' }]
@@ -717,7 +719,6 @@ const updateWholeOrder = async (payload, userId) => {
             const pid = p?.id != '' ? String(p.id) : null;
 
             if (pid && existById.has(pid)) {
-                console.log(`Update order item ${pid}`);
                 const it = existById.get(pid);
 
                 it.fk_menu_id = p.item_id ?? it.fk_menu_id;
@@ -727,8 +728,6 @@ const updateWholeOrder = async (payload, userId) => {
 
                 await it.save({transaction});
             } else {
-                console.log(`Create order item`);
-                console.log('p', p);
                 const createOrderItemParam = {
                     fk_order_id: order.id,
                     fk_menu_id: p.item_id,
@@ -842,11 +841,11 @@ export const webHookUpdateOrderPayment = async (param) => {
     if (!order) throw new NotFoundException('Order not found');
 
     if (order.payment.status === "Lunas" || order.payment.status === "Refund") {
-        throw new ConflictException("Payment status already finished or refunded");
+        return
     }
 
     if (order.status === "Batal") {
-        throw new ConflictException("Order already canceled");
+        return
     }
 
     if (
@@ -925,28 +924,34 @@ const findOrCreateCustomer = async (customer, tx) => {
     const exist = await Customer.findOne({
         where: {
             phone: customer.phone
-        }
+        },
+        transaction: tx
     })
 
     if (exist) {
         return exist;
     }
 
-    const user = await User.create({
-        type: "customer",
-    }, {
-        transaction: tx,
-    });
+    const user = await User.create({ type: "customer" }, { transaction: tx });
 
-    const customerData = await Customer.create({
+    try {
+        const customer = await Customer.create({
         fk_user_id: user.id,
-        name: customer.name,
-        phone: customer.phone,
-      }, {
-      transaction: tx,
-    });
+        name: payload.name,
+        phone: payload.phone,
+        }, { transaction: tx });
 
-    return customerData
+        return customer;
+    } catch (err) {
+        if (err.name === 'SequelizeUniqueConstraintError') {
+        const winner = await Customer.findOne({
+            where: { phone: payload.phone },
+            transaction: tx
+        });
+        return winner;
+        }
+        throw err;
+    }
 }
 
 const orderSummary = async (param) => {

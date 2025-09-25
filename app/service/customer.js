@@ -8,31 +8,35 @@ const create = async (customer) => {
     where: {
       name: customer.name,
       phone: customer.phone
-    },
-    transaction: tx ?? null,
+    }
   })
 
   if (exist) {
     return exist;
   }
-  
-  const user = await User.create({
-    type: "customer",
-  }, {
-    transaction: tx ?? null,
-  });
 
-  const customerData = await Customer.create({
-    fk_user_id: user.id,
-    name: customer.name,
-    phone: customer.phone,
-  }, {
-    transaction: tx ?? null,
-  });
+  try {
+    const user = await User.create({
+      type: "customer",
+    }, {
+      transaction: tx,
+    });
 
-  await tx.commit();
+    const customerData = await Customer.create({
+      fk_user_id: user.id,
+      name: customer.name,
+      phone: customer.phone,
+    }, {
+      transaction: tx,
+    });
 
-  return customerData
+    await tx.commit();
+
+    return customerData
+  } catch (error) {
+    await tx.rollback();
+    throw error;
+  }
 }
 
 const getOne = async (id) => {

@@ -20,7 +20,14 @@ const STATUS_PRIORITY_CASE = `
 
 const fetchList = async (param) => {
     let where = {};
-    if(param.created_by) {where.created_by = param.created_by}
+    if(param.created_by) {
+        where.created_by = param.created_by
+
+        const customer = await Customer.findOne({
+            where: { fk_user_id: param.created_by }
+        })
+        if(customer) where.fk_customer_id = customer.id
+    }
 
     const rows = await Reservation.findAll({
         where,
@@ -173,29 +180,35 @@ const del = async (id) => {
 const findOrCreateCustomer = async (customer, tx) => {
     const exist = await Customer.findOne({
         where: {
-            name: customer.name,
             phone: customer.phone
         },
-        transaction: tx ?? null,
+        transaction: tx
     })
 
     if (exist) {
         return exist;
     }
 
-    const user = await User.create({
-        type: "customer",
-    }, {
-        transaction: tx ?? null,
-    });
+    const user = await User.create({ type: "customer" }, { transaction: tx });
 
-    return await Customer.create({
+    try {
+        const customer = await Customer.create({
         fk_user_id: user.id,
-        name: customer.name,
-        phone: customer.phone,
-    }, {
-        transaction: tx ?? null,
-    });
+        name: payload.name,
+        phone: payload.phone,
+        }, { transaction: tx });
+
+        return customer;
+    } catch (err) {
+        if (err.name === 'SequelizeUniqueConstraintError') {
+        const winner = await Customer.findOne({
+            where: { phone: payload.phone },
+            transaction: tx
+        });
+        return winner;
+        }
+        throw err;
+    }
 }
 
 const getActor = (user) => {

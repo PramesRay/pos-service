@@ -39,6 +39,7 @@ const update = async (req, res) => {
                 total_approved: req.body.total_approved,
                 approval_notes: req.body.approval_notes,
             }
+            break;
 
     }
 
@@ -53,6 +54,14 @@ const del = async (req, res) => {
     res.status(200).json(successResponse("successfully delete fund request", null))
 }
 
+const finish = async (req, res) => {
+    const param = {
+        id: req.params.id,
+    }
+    const fundRequest = await fundRequestService.finish(param, req.user.profile)
+    res.status(200).json(successResponse("successfully finish stock request", fundRequest))
+}
+
 const fetchList = async (req, res) => {
     const list = await fundRequestService.fetchList()
     res.status(200).json(successResponse("successfully fetch fund request list", list))
@@ -62,6 +71,7 @@ export default {
     create,
     update,
     del,
+    finish,
     fetchList,
 }
 

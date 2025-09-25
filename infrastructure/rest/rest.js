@@ -61,7 +61,7 @@ export const initServer = () => {
     rest.get('/employee/me', employeeHandler.getOne)
     rest.get('/employees', employeeHandler.getAll)
     rest.put('/employee/:uid', employeeHandler.update)
-    rest.put('/employee/me', employeeHandler.updateMe)
+    rest.put('/employee-me', employeeHandler.updateMe)
     rest.delete('/employee/:uid', employeeHandler.remove)
 
     // branch
@@ -115,22 +115,22 @@ export const initServer = () => {
 
     // stock request
     rest.get('/inventory/stock-requests', stockRequestHandler.fetchList)
-    rest.post('/inventory/stock-requests', stockRequestHandler.create)
-    rest.put('/inventory/stock-requests', stockRequestHandler.update)
-    rest.put('/inventory/stock-requests/:id/ready', stockRequestHandler.ready)
-    rest.put('/inventory/stock-requests/:id/end', stockRequestHandler.finish)
+    rest.post('/inventory/stock-request', stockRequestHandler.create)
+    rest.put('/inventory/stock-request', stockRequestHandler.update)
+    rest.put('/inventory/stock-request/:id/ready', stockRequestHandler.ready)
+    rest.put('/inventory/stock-request/:id/end', stockRequestHandler.finish)
 
     // stock movement
-    rest.post('/inventory/stock-movements', stockMovementHandler.create)
-    rest.put('/inventory/stock-movements', stockMovementHandler.update)
-    rest.delete('/inventory/stock-movements/:id', stockMovementHandler.del)
     rest.get('/inventory/stock-movements', stockMovementHandler.fetchList)
+    rest.post('/inventory/stock-movement', stockMovementHandler.create)
+    rest.put('/inventory/stock-movement', stockMovementHandler.update)
+    rest.delete('/inventory/stock-movement/:id', stockMovementHandler.del)
 
     // inventory item
     rest.get('/inventory/items', inventoryItemHandler.fetchList)
-    rest.post('/inventory/items', inventoryItemHandler.create)
-    rest.put('/inventory/items', inventoryItemHandler.update)
-    rest.delete('/inventory/items/:id', inventoryItemHandler.del)
+    rest.post('/inventory/item', inventoryItemHandler.create)
+    rest.put('/inventory/item', inventoryItemHandler.update)
+    rest.delete('/inventory/item/:id', inventoryItemHandler.del)
 
     // category
     rest.post('/category', categoryHandler.create)
@@ -138,10 +138,11 @@ export const initServer = () => {
     rest.delete('/category/:id', categoryHandler.remove)
 
     // fund request
-    rest.get('/fund-request', fundRequestHandler.fetchList)
-    rest.post('/finance/fund-requests', fundRequestHandler.create)
-    rest.put('/finance/fund-requests', fundRequestHandler.update)
-    rest.delete('/finance/fund-requests/:id', fundRequestHandler.del)
+    rest.get('/finance/fund-requests', fundRequestHandler.fetchList)
+    rest.post('/finance/fund-request', fundRequestHandler.create)
+    rest.put('/finance/fund-request', fundRequestHandler.update)
+    rest.put('/finance/fund-request/:id/end', fundRequestHandler.finish)
+    rest.delete('/finance/fund-request/:id', fundRequestHandler.del)
 
     // reservation /reservation
     rest.get('/reservations', reservationHandler.fetchList)
