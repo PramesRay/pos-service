@@ -180,10 +180,10 @@ const del = async (id) => {
     await reservation.destroy()
 }
 
-const findOrCreateCustomer = async (customer, tx) => {
+const findOrCreateCustomer = async (param, tx) => {
     const exist = await Customer.findOne({
         where: {
-            phone: customer.phone
+            phone: param.phone
         },
         transaction: tx
     })
@@ -197,15 +197,15 @@ const findOrCreateCustomer = async (customer, tx) => {
     try {
         const customer = await Customer.create({
         fk_user_id: user.id,
-        name: payload.name,
-        phone: payload.phone,
+        name: param.name,
+        phone: param.phone,
         }, { transaction: tx });
 
         return customer;
     } catch (err) {
         if (err.name === 'SequelizeUniqueConstraintError') {
         const winner = await Customer.findOne({
-            where: { phone: payload.phone },
+            where: { phone: param.phone },
             transaction: tx
         });
         return winner;
