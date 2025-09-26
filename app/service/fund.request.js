@@ -8,6 +8,12 @@ import {
 } from "../model/model.js";
 import {decodePrefixedId, prefixId} from "../../util/util.js";
 import { NotFoundException } from "../../exception/not.found.exception.js";
+import { Op } from "sequelize";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const create = async (param, authUser) => {
     const warehouseShift = await WarehouseShift.findOne(
@@ -270,6 +276,11 @@ const fetchList = async () => {
             ],
             ["createdAt", "ASC"]
         ],
+        where: {
+            createdAt: {
+                [Op.gte]: dayjs().subtract(1, 'month').toDate()
+            }
+        },
     });
 
     return rows.map((row) => {

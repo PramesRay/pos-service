@@ -8,7 +8,11 @@ import {
     WarehouseShift
 } from "../model/model.js";
 import { Op } from "sequelize";
-
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const create = async (param, authUser) => {
     // get current kitchen shift
@@ -348,6 +352,11 @@ const fetchList = async () => {
             ],
             ['createdAt', 'ASC']
         ],
+        where: {
+            createdAt: {
+                [Op.gte]: dayjs().subtract(1, 'month').toDate()
+            }
+        },
     })
 
     return rows.map((row) => {

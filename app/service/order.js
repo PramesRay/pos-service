@@ -42,7 +42,7 @@ const getActor = (user) => {
     return null;
 }
 export const fetchOrderList = async (param) => {
-    let where = {};
+    let where = { };
     if(param.created_by) {
         where.created_by = param.created_by;
 
@@ -54,6 +54,8 @@ export const fetchOrderList = async (param) => {
 
     if(param.branch_id) {
         where.fk_branch_id = param.branch_id
+        const {activeKitchenShift, activeCashierShift} = await getActiveKitchenAndCashierShift(param.branch_id)
+        if(activeKitchenShift) where.fk_kitchen_shift_id = activeKitchenShift.id
     }
 
     const rows = await Order.findAll({

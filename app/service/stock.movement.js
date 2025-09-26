@@ -2,6 +2,12 @@ import {Branch, InventoryItem, StockMovement, WarehouseShift} from "../model/mod
 import {sequelize} from "../../infrastructure/database/mysql.js";
 import { ConflictException } from "../../exception/conflict.exception.js";
 import { NotFoundException } from "../../exception/not.found.exception.js";
+import { Op } from "sequelize";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const create = async (param, authUser) => {
     // get current warehouse shift
@@ -251,6 +257,11 @@ const fetchList = async () => {
             {model: Branch, as: "branch"},
         ],
         order: [['createdAt', 'DESC']],
+        where: {
+            createdAt: {
+                [Op.gte]: dayjs().subtract(1, 'month').toDate()
+            }
+        },
     })
 
     return rows.map((row) => {
