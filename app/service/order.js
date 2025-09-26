@@ -176,16 +176,16 @@ export const createOrder = async (param, authUser) => {
 
     if (!param.is_take_away) {
         where.table_number = param.table_number
+        const activeOrder = await Order.findOne({
+            where
+        })
+    
+    
+        if (activeOrder) {
+          throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
+        }
     }
 
-    const activeOrder = await Order.findOne({
-        where
-    })
-
-
-    if (activeOrder) {
-      throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
-    }
 
     try {
         const kitchenShiftDetails = await KitchenShiftDetail.findAll({
@@ -288,15 +288,15 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
 
     if (!param.is_take_away) {
         where.table_number = param.table_number
+        const activeOrder = await Order.findOne({
+            where
+        })
+    
+        if (activeOrder) {
+          throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
+        }
     }
 
-    const activeOrder = await Order.findOne({
-        where
-    })
-
-    if (activeOrder) {
-      throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
-    }
 
     try {
         const kitchenShiftDetails = await KitchenShiftDetail.findAll({
