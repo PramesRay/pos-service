@@ -27,9 +27,9 @@ const getOne = async (uid) => {
   });
 
   if (!employee) {
-    throw new NotFoundException("Employee not found");
+    throw new NotFoundException("Akun tidak ditemukan");
   } else if (!employee.role) {
-    throw new UnauthorizedException("Account not verified yet");
+    throw new UnauthorizedException("Akun belum dikonfirmasi");
   }
   
   let shift_emp = null;
@@ -154,7 +154,7 @@ const update = async (uid, data) => {
   });
 
   if (!employee) {
-    throw new NotFoundException("Employee not found");
+    throw new NotFoundException("Akun tidak ditemukan");
   }
 
   const { name, role, email, assigned_branch_id } = data;
@@ -174,7 +174,7 @@ const remove = async (uid) => {
   });
 
   if (!employee) {
-    throw new NotFoundException("Employee not found");
+    throw new NotFoundException("Akun tidak ditemukan");
   }
 
   // Hapus data

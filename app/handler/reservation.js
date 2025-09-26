@@ -39,12 +39,14 @@ const update = async (req, res) => {
                 time: req.body.time,
                 people: req.body.people,
                 notes: req.body.notes,
+                type: req.body.type
             }
             break;
         case 'updateReservationStatus':
             param = {
                 id: req.body.id,
                 approved: req.body.approved,
+                type: req.body.type
             }
             break;
     }

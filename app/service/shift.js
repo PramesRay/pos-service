@@ -23,7 +23,7 @@ const startEmployeeShift = async (authUser) => {
     });
 
     if (latestShift && !latestShift.end) {
-        throw new ConflictException("Shift already exists");
+        throw new ConflictException("Sif sudah dimulai");
     }
 
     const employee = await EmployeeShift.create({
@@ -46,7 +46,7 @@ const endEmployeeShift = async (authUser) => {
     });
 
     if (latestShift && latestShift.end) {
-        throw new ConflictException("Shift already ended");
+        throw new ConflictException("Sif telah diakhiri");
     }
 
     latestShift.end = new Date();
@@ -131,7 +131,7 @@ const startKitchenShift = async (param, authUser) => {
     })
 
     if (latestShift && !latestShift.end) {
-        throw new ConflictException("Shift already exists");
+        throw new ConflictException("Sif sudah dimulai");
     }
 
     const tx = await sequelize.transaction();
@@ -180,11 +180,11 @@ const updateKitchenShift = async (param, authUser) => {
     const latestShift = await KitchenShift.findByPk(param.id);
 
     if (!latestShift) {
-        throw new NotFoundException("Kitchen Shift not found");
+        throw new NotFoundException("Sif Dapur tidak ditemukan");
     }
 
     if (latestShift && latestShift.end) {
-        throw new ConflictException("Shift already ended");
+        throw new ConflictException("Sif telah diakhiri");
     }
 
     const shiftDetails = await KitchenShiftDetail.findAll({
@@ -230,11 +230,11 @@ const endKitchenShift = async (param, authUser) => {
     const latestShift = await KitchenShift.findByPk(param.id);
 
     if (!latestShift) {
-        throw new NotFoundException("Kitchen Shift not found");
+        throw new NotFoundException("Sif Dapur tidak ditemukan");
     }
 
     if (latestShift && latestShift.end) {
-        throw new ConflictException("Shift already ended");
+        throw new ConflictException("Sif telah diakhiri");
     }
 
     const shiftDetails = await KitchenShiftDetail.findAll({
@@ -591,7 +591,7 @@ const startCashierShift = async (param, authUser) => {
     });
 
     if (latestShift && !latestShift.end) {
-        throw new ConflictException("Shift already exists");
+        throw new ConflictException("Sif sudah dimulai");
     }
 
     const shift = await CashierShift.create({
@@ -609,11 +609,11 @@ const updateCashierShift = async (param, authUser) => {
     const shift = await CashierShift.findByPk(param.id);
 
     if (!shift) {
-        throw new NotFoundException("Cashier shift not found");
+        throw new NotFoundException("Sif Kasir tidak ditemukan");
     }
 
     if (shift.end) {
-        throw new ConflictException("Cannot update ended shift");
+        throw new ConflictException("Sif Kasir telah diakhiri");
     }
 
     const transaction = await sequelize.transaction();
@@ -688,11 +688,11 @@ const endCashierShift = async (param, authUser) => {
     const shift = await CashierShift.findByPk(param.id);
 
     if (!shift) {
-        throw new NotFoundException("Cashier shift not found");
+        throw new NotFoundException("Sif Kasir tidak ditemukan");
     }
 
     if (shift.end) {
-        throw new ConflictException("Cannot update ended shift");
+        throw new ConflictException("Sif Kasir telah diakhiri");
     }
 
     shift.end = new Date()
@@ -710,7 +710,7 @@ const startWarehouseShift = async (authUser) => {
     })
 
     if (latestShift) {
-        throw new ConflictException("Shift already exists");
+        throw new ConflictException("Sif sudah dimulai");
     }
 
     const shift = await WarehouseShift.create({
@@ -726,7 +726,7 @@ const updateWarehouseShift = async (param, authUser) => {
     const shift = await WarehouseShift.findByPk(param.id);
 
     if (!shift) {
-        throw new NotFoundException("Warehouse shift not found");
+        throw new NotFoundException("Sif Gudang tidak ditemukan");
     }
 
     shift.notes = param.notes;
@@ -739,11 +739,11 @@ const endWarehouseShift = async (param, authUser) => {
     const shift = await WarehouseShift.findByPk(param.id);
 
     if (!shift) {
-        throw new NotFoundException("Warehouse shift not found");
+        throw new NotFoundException("Sif Gudang tidak ditemukan");
     }
 
     if (shift.end) {
-        throw new ConflictException("Shift already ended");
+        throw new ConflictException("Sif Gudang telah diakhiri");
     }
 
     shift.end = new Date();

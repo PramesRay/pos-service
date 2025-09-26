@@ -7,6 +7,7 @@ import {
     WarehouseShift
 } from "../model/model.js";
 import {decodePrefixedId, prefixId} from "../../util/util.js";
+import { NotFoundException } from "../../exception/not.found.exception.js";
 
 const create = async (param, authUser) => {
     const warehouseShift = await WarehouseShift.findOne(
@@ -18,7 +19,7 @@ const create = async (param, authUser) => {
     )
 
     if (!warehouseShift) {
-        throw new Error("Warehouse shift not found")
+        throw new NotFoundException("Sif Gudang tidak ditemukan")
     }
 
     const tx = await sequelize.transaction()
@@ -161,7 +162,7 @@ const approveFundRequest = async (payload, authUser) => {
 const findFundRequestAndItems = async (id) => {
     const fundRequest = await FundRequest.findByPk(id)
     if (!fundRequest) {
-        throw new Error("Fund request not found")
+        throw new NotFoundException("Permintaan Dana tidak ditemukan")
     }
 
     const fundRequestItems = await FundRequestItem.findAll({
@@ -170,7 +171,7 @@ const findFundRequestAndItems = async (id) => {
         }
     })
     if (!fundRequestItems) {
-        throw new Error("Fund request item not found")
+        throw new NotFoundException("Item Permintaan Dana tidak ditemukan")
     }
 
     return {
@@ -213,7 +214,7 @@ const finish = async (payload, authUser) => {
     const idNumber = decodePrefixedId(payload.id).idNumber;
     const fundRequest = await FundRequest.findByPk(idNumber);
     if (!fundRequest) {
-        throw new Error("fund request not found")
+        throw new NotFoundException("Permintaan Dana tidak ditemukan")
     }
 
     const fundRequestItems = await FundRequestItem.findAll({

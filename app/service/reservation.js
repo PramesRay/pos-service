@@ -112,6 +112,8 @@ const update = async (param, authUser, by = "employee") => {
     if (by === "customer") userId = param.customer.fk_user_id
     else userId = authUser.user.id
 
+    console.log(userId, param.type)
+
     switch (param.type) {
         case 'updateReservation':
             return await updateReservation(param, userId);
@@ -127,7 +129,7 @@ const updateReservation = async (param, userId) => {
     const reservation = await Reservation.findByPk(reservationId)
 
     if (!reservation) {
-        throw new NotFoundException("Reservation not found")
+        throw new NotFoundException("Reservasi tidak ditemukan")
     }
 
     reservation.set(
@@ -147,12 +149,13 @@ const updateReservation = async (param, userId) => {
 }
 
 const updateReservationStatus = async (param, userId) => {
+    console.log('function updateReservationStatus is running');
     const reservationId = decodePrefixedId(param.id).idNumber;
 
     const reservation = await Reservation.findByPk(reservationId)
 
     if (!reservation) {
-        throw new NotFoundException("Reservation not found")
+        throw new NotFoundException("Reservasi tidak ditemukan")
     }
 
     reservation.set(
@@ -172,7 +175,7 @@ const del = async (id) => {
     
     const reservation = await Reservation.findByPk(reservationId)
     if (!reservation) {
-        throw new NotFoundException("Reservation not found")
+        throw new NotFoundException("Reservasi tidak ditemukan")
     }
     await reservation.destroy()
 }

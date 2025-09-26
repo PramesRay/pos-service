@@ -13,7 +13,7 @@ const create = async (data) => {
     });
 
     if (branch) {
-        throw new ConflictException("Branch already exists");
+        throw new ConflictException("Cabang sudah ada");
     }
 
     return await Branch.create(data);
@@ -23,7 +23,7 @@ const update = async (id, data) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new NotFoundException("Branch not found");
+        throw new NotFoundException("Cabang tidak ditemukan");
     }
 
     return await branch.update(data);
@@ -33,7 +33,7 @@ const remove = async (id) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new NotFoundException("Branch not found");
+        throw new NotFoundException("Cabang tidak ditemukan");
     }
 
     await branch.destroy();
@@ -80,7 +80,7 @@ const getOne = async (id) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new NotFoundException("Branch not found");
+        throw new NotFoundException("Cabang tidak ditemukan");
     }
 
     const shiftCashier = await shiftService.getCurrentCashierShift({branch_id: branch.id})

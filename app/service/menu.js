@@ -22,7 +22,7 @@ const getOne = async (id) => {
     ],
   })
   if (!menu) {
-    throw new NotFoundException("Menu not found")
+    throw new NotFoundException("Menu tidak ditemukan")
   }
   return menu
 }
@@ -88,7 +88,7 @@ const update = async (id, param) => {
     const {branch_id, category_id, name, description, price, threshold} = param
     const menu = await Menu.findByPk(id)
     if (!menu) {
-        throw new NotFoundException("Menu not found")
+        throw new NotFoundException("Menu tidak ditemukan")
     }
     await menu.update({
         fk_branch_id: branch_id,
@@ -104,7 +104,7 @@ const update = async (id, param) => {
 const remove = async (id) => {
     const menu = await Menu.findByPk(id)
     if (!menu) {
-        throw new NotFoundException("Menu not found")
+        throw new NotFoundException("Menu tidak ditemukan")
     }
     await menu.destroy()
 }

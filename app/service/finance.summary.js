@@ -22,7 +22,7 @@ const fetchFinanceSummary = async (param) => {
 
     if (branchFilter) {
         const existBranch = await Branch.findByPk(branchFilter)
-        if (!existBranch) throw new NotFoundException("branch not found")
+        if (!existBranch) throw new NotFoundException("Cabagn tidak ditemukan")
         branch.id = prefixId('branch', existBranch.id)
         branch.name = existBranch.name
     }

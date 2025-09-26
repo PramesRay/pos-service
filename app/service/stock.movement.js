@@ -1,6 +1,7 @@
 import {Branch, InventoryItem, StockMovement, WarehouseShift} from "../model/model.js";
 import {sequelize} from "../../infrastructure/database/mysql.js";
 import { ConflictException } from "../../exception/conflict.exception.js";
+import { NotFoundException } from "../../exception/not.found.exception.js";
 
 const create = async (param, authUser) => {
     // get current warehouse shift
@@ -13,7 +14,7 @@ const create = async (param, authUser) => {
     )
 
     if (!warehouseShift) {
-        throw new Error("Warehouse shift not found")
+        throw new NotFoundException("Sif Gudang tidak ditemukan")
     }
 
     // start transaction
@@ -66,7 +67,7 @@ const addInventoryItem = async (id, quantity, tx, authUser) => {
     )
 
     if (!inventoryItem) {
-        throw new Error("Inventory item not found")
+        throw new NotFoundException("Barang Gudang tidak ditemukan")
     }
 
     if (inventoryItem.is_new) {
@@ -88,11 +89,11 @@ const deductInventoryItem = async (id, quantity, tx, authUser) => {
     )
 
     if (!inventoryItem) {
-        throw new Error("Inventory item not found")
+        throw new NotFoundException("Barang Gudang tidak ditemukan")
     }
 
     if (inventoryItem.quantity < quantity) {
-        throw new ConflictException("Insufficient inventory item quantity")
+        throw new ConflictException("Jumlah pengurangan melebihi kuantitas barang gudang")
     }
 
     inventoryItem.quantity -= quantity
@@ -112,7 +113,7 @@ const update = async (param, authUser) => {
     )
 
     if (!stockMovement) {
-        throw new Error("Stock movement not found")
+        throw new NotFoundException("Perpindahan Stok tidak ditemukan")
     }
 
     // get inventory item
@@ -125,7 +126,7 @@ const update = async (param, authUser) => {
     )
 
     if (!inventoryItem) {
-        throw new Error("inventory item not found")
+        throw new NotFoundException("Barang Gudang tidak ditemukan")
     }
 
     switch (stockMovement.status) {
@@ -192,7 +193,7 @@ const del = async (param, authUser) => {
     )
 
     if (!stockMovement) {
-        throw new Error("Stock movement not found")
+        throw new NotFoundException("Perpindahan Stok tidak ditemukan")
     }
 
     // find Inventory Item
@@ -205,7 +206,7 @@ const del = async (param, authUser) => {
     )
 
     if (!inventoryItem) {
-        throw new Error("inventory item not found")
+        throw new NotFoundException("Barang Gudang tidak ditemukan")
     }
 
     switch (stockMovement.status) {

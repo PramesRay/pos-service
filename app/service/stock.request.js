@@ -1,3 +1,4 @@
+import { NotFoundException } from "../../exception/not.found.exception.js";
 import {sequelize} from "../../infrastructure/database/mysql.js";
 import {
     Branch, Employee, InventoryItem,
@@ -19,7 +20,7 @@ const create = async (param, authUser) => {
     })
 
     if (!kitchenShift) {
-        throw new Error("Kitchen shift not found")
+        throw new NotFoundException("Sif Dapur tidak ditemukan")
     }
 
     // get current warehouse shift
@@ -32,7 +33,7 @@ const create = async (param, authUser) => {
     )
 
     if (!warehouseShift) {
-        throw new Error("Warehouse shift not found")
+        throw new NotFoundException("Sif Gudang tidak ditemukan")
     }
 
     // start transaction
@@ -95,7 +96,7 @@ const updateStock = async (param, authUser) => {
     })
 
     if (!stockRequest) {
-        throw new Error("Stock request not found")
+        throw new NotFoundException("Permintaan Stok tidak ditemukan")
     }
 
     // find Stock Request Item
@@ -150,8 +151,8 @@ const approveStock = async (param, authUser) => {
       lock: tx.LOCK.UPDATE,
     });
     if (!stockRequest) {
-      console.log(`Stock request not found with id ${param.id}`);
-      throw new Error('Stock request not found');
+      console.log(`Permintaan Stok tidak ditemukan with id ${param.id}`);
+      throw new NotFoundException('Permintaan Stok tidak ditemukan');
     }
 
     // 2) Ambil semua item milik request ini (dan kunci)
@@ -242,7 +243,7 @@ const ready = async (param, authUser) => {
     })
 
     if (!stockRequest) {
-        throw new Error("Stock request not found")
+        throw new NotFoundException("Permintaan Stok tidak ditemukan")
     }
 
     // find Stock Request Item
@@ -283,7 +284,7 @@ const ready = async (param, authUser) => {
 const finish = async (param, authUser) => {
     const stockRequest = await StockRequest.findByPk(param.id);
     if (!stockRequest) {
-        throw new Error("Stock request not found")
+        throw new NotFoundException("Permintaan Stok tidak ditemukan")
     }
 
     const stockRequestItems = await StockRequestItem.findAll({

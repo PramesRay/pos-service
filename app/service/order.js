@@ -150,7 +150,7 @@ export const createOrder = async (param, authUser) => {
     const orderItem = param.items
 
     if (!orderItem || !Array.isArray(orderItem) || orderItem.length < 1) {
-        throw new BadRequestException("invalid order items data")
+        throw new BadRequestException("Item pesanan tidak valid")
     }
 
     const {activeKitchenShift, activeCashierShift} = await getActiveKitchenAndCashierShift(param.branch_id)
@@ -159,7 +159,7 @@ export const createOrder = async (param, authUser) => {
     const customer = await findOrCreateCustomer(param.customer, tx)
 
     if (!customer) {
-        throw new BadRequestException("Failed to create customer")
+        throw new BadRequestException("Pelanggan tidak ditemukan")
     }
 
     const where = {
@@ -182,7 +182,7 @@ export const createOrder = async (param, authUser) => {
 
 
     if (activeOrder) {
-      throw new ConflictException(`Table number ${param.table_number} is already in use`)
+      throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
     }
 
     try {
@@ -195,19 +195,17 @@ export const createOrder = async (param, authUser) => {
         })
 
         if (kitchenShiftDetails.length < 1) {
-            throw new ConflictException("No menu available")
+            throw new ConflictException("Tidak ada menu yang tersedia")
         }
 
-        console.log('kitchenShiftDetails', kitchenShiftDetails)
         const unavailableMenu =
             kitchenShiftDetails.find(detail =>
                 orderItem.some(it => it.item_id === detail.fk_menu_id && it.quantity > detail.end_stock)
             );
 
-        console.log('unavailableMenu', unavailableMenu)
 
         if (unavailableMenu) {
-            throw new ConflictException(`Not enough ${unavailableMenu} available`);
+            throw new ConflictException(`Menu yang tersedia tidak mencukupi`);
         }
 
         const order = await createOrderAndOrderItem(param, customer, orderItem, activeKitchenShift, activeCashierShift, tx, authUser.user.id)
@@ -235,7 +233,7 @@ export const createOrder = async (param, authUser) => {
         return order;
     } catch (error) {
         await tx.rollback();
-        console.error('Failed to create order:', error);
+        console.error('Gagal membuat pesanan:', error);
         throw error;
     }
 }
@@ -244,7 +242,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
     const orderItem = param.items
 
     if (!orderItem || !Array.isArray(orderItem) || orderItem.length < 1) {
-      throw new BadRequestException("invalid order items data")
+      throw new BadRequestException("Item pesanan tidak valid")
     }
     
     const {activeKitchenShift, activeCashierShift} = await getActiveKitchenAndCashierShift(param.branch_id)
@@ -255,7 +253,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
     
     const customer = await findOrCreateCustomer(param.customer, tx)
     if (!customer) {
-        throw new BadRequestException("Failed to create customer")
+        throw new BadRequestException("Pelanggan tidak ditemukan")
     }
     
     if (type === "customer") {
@@ -295,7 +293,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
     })
 
     if (activeOrder) {
-      throw new ConflictException(`Table number ${param.table_number} is already in use`)
+      throw new ConflictException(`Meja ${param.table_number} sedang digunakan`)
     }
 
     try {
@@ -307,7 +305,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
         })
 
         if (kitchenShiftDetails.length < 1) {
-            throw new ConflictException("No menu available")
+            throw new ConflictException("Tidak ada menu yang tersedia")
         }
 
         const unavailableMenu =
@@ -316,11 +314,11 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
             );
 
         if (unavailableMenu) {
-            throw new ConflictException(`Not enough ${unavailableMenu?.menu?.name} available`);
+            throw new ConflictException(`Menu yang tersedia tidak mencukupi`);
         }
 
         const order = await createOrderAndOrderItem(param, customer, param.items, activeKitchenShift, activeCashierShift, tx, userId)
-        if (!order) throw new BadRequestException("Failed to create order")
+        if (!order) throw new BadRequestException("Gagal membuat pesanan")
         const amount = order.items.reduce((total, item) => total + (item.quantity * item.menu.price || 0), 0);
 
         const midtransPayload = {
@@ -331,7 +329,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
         }
 
         const transaction = await generateMidtransToken(midtransPayload)
-        if (!transaction) throw new BadRequestException("Failed to generate midtrans transaction")
+        if (!transaction) throw new BadRequestException("Gagal membuat pembayaran Midtrans")
 
         const createOrderPaymentParam = {
             fk_order_id: order.id,
@@ -358,7 +356,7 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
         return {...order, snap_token: transaction.token};
     } catch (error) {
         await tx.rollback();
-        console.error('Failed to create order:', error);
+        console.error('Gagal membuat pesanan:', error);
         throw error;
     }
 }
@@ -488,7 +486,7 @@ const updateOrderStatus = async (payload, userId) => {
       transaction: tx
     });
 
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
 
     // 2) Update status Order (pakai instance.save + transaction)
     order.status = payload.status;
@@ -569,7 +567,7 @@ const updateOrderItemStatus = async (payload, userId) => {
     });
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException('Pesanan tidak ditemukan');
     }
 
     const idToStatus = new Map(
@@ -651,7 +649,7 @@ const updateOrderPayment = async (payload, userId) => {
         const order = orderData.get({ plain: true }) 
         
         if (order.payment.status === "Lunas" || order.payment.status === "Refund") {
-            throw new ConflictException("Payment status already finished or refunded");
+            throw new ConflictException("Pembayaran telah selesai atau direfund");
         }
 
         const amount = order.items.reduce((total, item) => total + (item.quantity * item.menu.price || 0), 0);
@@ -664,7 +662,7 @@ const updateOrderPayment = async (payload, userId) => {
               items: order.items
             }
             const transaction = await generateMidtransToken(midtransPayload)
-            if (!transaction) throw new BadRequestException("Failed to generate midtrans transaction")
+            if (!transaction) throw new BadRequestException("Gagal membuat pembayaran Midtrans")
 
             orderData.payment.snap_token = transaction.token
         } else {
@@ -698,7 +696,7 @@ const updateWholeOrder = async (payload, userId) => {
   const order = await Order.findByPk(payload.id, {
     transaction,
   });
-  if (!order) throw new NotFoundException('Order not found');
+  if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
 
   try {
     const orderItems = await OrderItem.findAll({
@@ -795,7 +793,7 @@ const getActiveKitchenAndCashierShift = async (branchId) => {
     })
 
     if (!activeKitchenShift) {
-        throw new NotFoundException("active kitchen shift not found")
+        throw new NotFoundException("Tidak ada Sif Dapur yang aktif")
     }
 
     const activeCashierShift = await CashierShift.findOne({
@@ -806,7 +804,7 @@ const getActiveKitchenAndCashierShift = async (branchId) => {
     })
 
     if (!activeCashierShift) {
-        throw new NotFoundException("active cashier shift not found")
+        throw new NotFoundException("Tidak ada Sif Kasir yang aktif")
     }
 
     return {activeKitchenShift, activeCashierShift}
@@ -828,7 +826,7 @@ export const webHookUpdateOrderPayment = async (param) => {
     );
 
     if(sig !== param.signature_key) {
-        throw new UnauthorizedException("Invalid signature key");
+        throw new UnauthorizedException("Signature Key Salah");
     }
     const order = await Order.findByPk(param.order_id, {
         include: [
@@ -838,7 +836,7 @@ export const webHookUpdateOrderPayment = async (param) => {
         ],
     });
 
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
 
     if (order.payment.status === "Lunas" || order.payment.status === "Refund") {
         return

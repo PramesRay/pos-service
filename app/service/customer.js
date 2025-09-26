@@ -53,7 +53,7 @@ const update = async (id, data) => {
   });
 
   if (!customer) {
-    throw new NotFoundException("Customer not found");
+    throw new NotFoundException("Pelanggan tidak ditemukan");
   }
 
   return await customer.update(data);
