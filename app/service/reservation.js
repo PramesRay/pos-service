@@ -147,7 +147,7 @@ const updateReservation = async (param, userId) => {
 }
 
 const updateReservationStatus = async (param, userId) => {
-    const reservationId = decodePrefixedId("rsv", param.id).idNumber;
+    const reservationId = decodePrefixedId(param.id).idNumber;
 
     const reservation = await Reservation.findByPk(reservationId)
 
@@ -168,7 +168,7 @@ const updateReservationStatus = async (param, userId) => {
 }
 
 const del = async (id) => {
-    const reservationId = decodePrefixedId("rsv", id).idNumber;
+    const reservationId = decodePrefixedId(id).idNumber;
     
     const reservation = await Reservation.findByPk(reservationId)
     if (!reservation) {
