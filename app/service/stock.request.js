@@ -148,59 +148,46 @@ const updateStock = async (param, authUser) => {
 const approveStock = async (param, authUser) => {
   const tx = await sequelize.transaction();
   try {
-    console.log(`Starting approve stock request ${param.id} with user ${authUser.id}`);
-    // 1) Ambil request + kunci baris untuk menghindari race condition
     const stockRequest = await StockRequest.findByPk(param.id, {
       transaction: tx,
       lock: tx.LOCK.UPDATE,
     });
     if (!stockRequest) {
-      console.log(`Permintaan Stok tidak ditemukan with id ${param.id}`);
       throw new NotFoundException('Permintaan Stok tidak ditemukan');
     }
-
-    // 2) Ambil semua item milik request ini (dan kunci)
+   
     const items = await StockRequestItem.findAll({
       where: { fk_stock_request_id: param.id },
       transaction: tx,
       lock: tx.LOCK.UPDATE,
     });
-    console.log(`Found ${items.length} items for stock request ${param.id}`);
-
-    // 3) Konstruksi set id yang disetujui dari payload
+    
     const approvedIds = new Set(
       (param.items || [])
         .filter((it) => it && it.id != null && it.approved === true)
         .map((it) => it.id)
     );
-    console.log(`Approved ids: ${Array.from(approvedIds).join(', ')}`);
-
-    // 4) Hitung berapa yang akan disetujui (pastikan id-nya memang milik request ini)
+    
     const approvedCount = items.reduce(
       (acc, it) => acc + (approvedIds.has(it.fk_inventory_item_id) ? 1 : 0),
       0
     );
-    console.log(`Approved count: ${approvedCount}`);
 
-    // 5) Update item dalam dua batch
-    // 5a) Set "Diproses" untuk item yang disetujui
+        
     if (approvedCount > 0) {
-      console.log(`Updating ${approvedCount} items to "Diproses"`);
       await StockRequestItem.update(
         { status: 'Diproses', updated_by: authUser.id },
         {
           where: {
             fk_stock_request_id: param.id,
             fk_inventory_item_id: { [Op.in]: Array.from(approvedIds) },
-            status: 'Pending', // opsional: hanya yang pending
+            status: 'Pending', 
           },
           transaction: tx,
         }
       );
     }
-
-    // 5b) Set "Ditolak" untuk item lain yang bukan approvedIds
-    console.log(`Updating remaining items to "Ditolak"`);
+    
     await StockRequestItem.update(
       { status: 'Ditolak', updated_by: authUser.id },
       {
@@ -208,16 +195,14 @@ const approveStock = async (param, authUser) => {
           fk_stock_request_id: param.id,
           ...(approvedIds.size
             ? { fk_inventory_item_id: { [Op.notIn]: Array.from(approvedIds) } }
-            : {}), // jika tidak ada yang disetujui, maka semua akan masuk sini
-          status: 'Pending', // opsional: hanya yang pending
+            : {}), 
+          status: 'Pending', 
         },
         transaction: tx,
       }
     );
 
-    // 6) Tentukan status request
     const newRequestStatus = approvedCount > 0 ? 'Diproses' : 'Ditolak';
-    console.log(`Updating stock request status to "${newRequestStatus}"`);
     await stockRequest.update(
       { status: newRequestStatus, updated_by: authUser.id },
       { transaction: tx }
@@ -229,11 +214,9 @@ const approveStock = async (param, authUser) => {
     const refreshed = await StockRequest.findByPk(param.id, {
       include: [{ model: StockRequestItem, as: 'items' }],
     });
-    console.log(`Finished approve stock request ${param.id}`);
     return refreshed;
   } catch (err) {
     await tx.rollback();
-    console.log(`Error on approve stock request ${param.id}: ${err.message}`);
     throw err;
   }
 };

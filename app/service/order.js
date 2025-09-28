@@ -149,9 +149,9 @@ export const fetchOrderList = async (param) => {
 
 
 export const createOrder = async (param, authUser) => {
-    const orderItem = param.items
+    const orderItems = param.items
 
-    if (!orderItem || !Array.isArray(orderItem) || orderItem.length < 1) {
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length < 1) {
         throw new BadRequestException("Item pesanan tidak valid")
     }
 
@@ -191,7 +191,6 @@ export const createOrder = async (param, authUser) => {
         const kitchenShiftDetails = await KitchenShiftDetail.findAll({
             where: {
                 fk_kitchen_shift_id: activeKitchenShift.id,
-                end_stock: {[Op.gt]: 0}
             },
             include: [{model: Menu, as: "menu"}]
         })
@@ -200,17 +199,16 @@ export const createOrder = async (param, authUser) => {
             throw new ConflictException("Tidak ada menu yang tersedia")
         }
 
-        const unavailableMenu =
-            kitchenShiftDetails.find(detail =>
-                orderItem.some(it => it.item_id === detail.fk_menu_id && it.quantity > detail.end_stock)
-            );
-
-
-        if (unavailableMenu) {
-            throw new ConflictException(`Menu yang tersedia tidak mencukupi`);
+        // Validasi kecukupan stok
+        for (const d of kitchenShiftDetails) {
+            const need = orderItems.find(it => it.item_id === d.fk_menu_id)?.quantity || 0;
+            if (need > 0 && d.end_stock < need) {
+            const name = d.menu?.name ?? `Menu#${d.fk_menu_id}`;
+            throw new ConflictException(`Stok "${name}" tidak mencukupi. Butuh ${need}, sisa ${d.end_stock}.`);
+            }
         }
 
-        const order = await createOrderAndOrderItem(param, customer, orderItem, activeKitchenShift, activeCashierShift, tx, authUser.user.id)
+        const order = await createOrderAndOrderItem(param, customer, orderItems, activeKitchenShift, activeCashierShift, tx, authUser.user.id)
 
         const createOrderPaymentParam = {
             fk_order_id: order.id,
@@ -223,12 +221,20 @@ export const createOrder = async (param, authUser) => {
 
         await OrderPayment.create(createOrderPaymentParam, {transaction: tx});
 
-        await Promise.all(kitchenShiftDetails.map(async (detail) => {
-            const orderItemQuantity = orderItem.find(it => it.item_id === detail.fk_menu_id)?.quantity ?? 0
-            await detail.update({
+        for (const detail of kitchenShiftDetails) {
+            const orderItemQuantity = orderItems.find(it => it.item_id === detail.fk_menu_id)?.quantity ?? 0;
+            if (orderItemQuantity > 0) {
+            if (detail.end_stock < orderItemQuantity) {
+                throw new ConflictException(`Stok ${detail.menu?.name ?? "menu"} tidak mencukupi`);
+            }
+            await detail.update(
+                {
                 end_stock: detail.end_stock - orderItemQuantity
-            }, {transaction: tx})
-        }))
+                },
+                { transaction: tx }
+            );
+            }
+        }
 
         await tx.commit()
 
@@ -241,9 +247,9 @@ export const createOrder = async (param, authUser) => {
 }
 
 export const createDirectPaymentOrder = async (param, authUser, type = 'employee') => {
-    const orderItem = param.items
+    const orderItems = param.items
 
-    if (!orderItem || !Array.isArray(orderItem) || orderItem.length < 1) {
+    if (!orderItems || !Array.isArray(orderItems) || orderItems.length < 1) {
       throw new BadRequestException("Item pesanan tidak valid")
     }
     
@@ -302,21 +308,21 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
         const kitchenShiftDetails = await KitchenShiftDetail.findAll({
             where: {
                 fk_kitchen_shift_id: activeKitchenShift.id,
-                end_stock: {[Op.gt]: 0}
-            }
+            },
+            transaction: tx
         })
 
         if (kitchenShiftDetails.length < 1) {
             throw new ConflictException("Tidak ada menu yang tersedia")
         }
 
-        const unavailableMenu =
-            kitchenShiftDetails.find(detail =>
-                orderItem.some(it => it.item_id === detail.fk_menu_id && it.quantity > detail.end_stock)
-            );
-
-        if (unavailableMenu) {
-            throw new ConflictException(`Menu yang tersedia tidak mencukupi`);
+        // Validasi kecukupan stok
+        for (const d of kitchenShiftDetails) {
+            const need = orderItems.find(it => it.item_id === d.fk_menu_id)?.quantity || 0;
+            if (need > 0 && d.end_stock < need) {
+            const name = d.menu?.name ?? `Menu#${d.fk_menu_id}`;
+            throw new ConflictException(`Stok "${name}" tidak mencukupi`);
+            }
         }
 
         const order = await createOrderAndOrderItem(param, customer, param.items, activeKitchenShift, activeCashierShift, tx, userId)
@@ -346,12 +352,20 @@ export const createDirectPaymentOrder = async (param, authUser, type = 'employee
 
         await OrderPayment.create(createOrderPaymentParam, {transaction: tx});
 
-        await Promise.all(kitchenShiftDetails.map(async (detail) => {
-            const orderItemQuantity = orderItem.find(it => it.item_id === detail.fk_menu_id)?.quantity ?? 0
-            await detail.update({
+        for (const detail of kitchenShiftDetails) {
+            const orderItemQuantity = orderItems.find(it => it.item_id === detail.fk_menu_id)?.quantity ?? 0;
+            if (orderItemQuantity > 0) {
+            if (detail.end_stock < orderItemQuantity) {
+                throw new ConflictException(`Stok ${detail.menu?.name ?? "menu"} tidak mencukupi`);
+            }
+            await detail.update(
+                {
                 end_stock: detail.end_stock - orderItemQuantity
-            }, {transaction: tx})
-        }))
+                },
+                { transaction: tx }
+            );
+            }
+        }
 
         await tx.commit()
 
