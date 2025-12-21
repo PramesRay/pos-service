@@ -1,8 +1,7 @@
 import {initServer} from "../infrastructure/rest/rest.js";
 import {getSequelize} from "../infrastructure/database/mysql.js";
 
-const sequelize = await getSequelize();
-await sequelize.sync({ alter: false });
+await getSequelize();
 
 const app = initServer()
 
