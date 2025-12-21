@@ -9,16 +9,16 @@ const local = {
   dialect: 'mysql',
 };
 const development = {
-  username: process.env.RAILWAY_DEV_DB_USER,
-  password: process.env.RAILWAY_DEV_DB_PASS,
-  database: process.env.RAILWAY_DEV_DB_NAME,
-  host: process.env.RAILWAY_DEV_DB_HOST,
-  port: process.env.RAILWAY_DEV_DB_PORT,
-  db_url: process.env.RAILWAY_DEV_DB_URL,
+  username: process.env.DEV_DB_USER,
+  password: process.env.DEV_DB_PASS,
+  database: process.env.DEV_DB_NAME,
+  host: process.env.DEV_DB_HOST,
+  port: process.env.DEV_DB_PORT,
+  db_url: process.env.DEV_DB_URL,
   dialect: 'mysql',
 };
 const production = {
-  db_url: process.env.RAILWAY_PROD_DB_URL,
+  db_url: process.env.PROD_DB_URL,
   dialect: 'mysql',
 };
 

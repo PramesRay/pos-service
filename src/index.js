@@ -1,3 +1,19 @@
-import app from "../app/app.js";
+import express from 'express'
+import { initServer } from '../infrastructure/rest/rest.js'
+import { initDB } from '../infrastructure/database/mysql.js'
 
-export default app;
+const app = express()
+
+await initDB()
+
+const restApp = initServer()
+app.use(restApp)
+
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`)
+    })
+}
+
+export default app

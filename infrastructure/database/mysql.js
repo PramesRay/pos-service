@@ -30,3 +30,14 @@ export const getSequelize = async () => {
 
   return sequelize;
 };
+
+export const initDB = async () => {
+    try {
+        await sequelize.authenticate();
+        console.info(`Successfully connected to database ${config.database}`);
+    } catch (error) {
+        console.error(error);
+    }
+
+    await sequelize.sync({ alter: false })
+}

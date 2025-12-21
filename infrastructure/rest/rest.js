@@ -18,11 +18,8 @@ import fundRequestHandler from "../../app/handler/fund.request.js";
 import reservationHandler from "../../app/handler/reservation.js";
 import financeSummaryHandler from "../../app/handler/finance.summary.js";
 
-let app;
-
 export const initServer = () => {
-    if (app) return app;
-    app = express();
+    const app = express();
 
     app.use(cors({
         origin: [
