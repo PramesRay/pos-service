@@ -5,10 +5,12 @@ import {
     User,
     Branch
 } from "../model/model.js";
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {NotFoundException} from "../../exception/not.found.exception.js";
 import {decodePrefixedId, prefixId} from "../../util/util.js";
 import { literal } from "sequelize";
+
+const sequelize = await getSequelize();
 
 const STATUS_PRIORITY_CASE = `
     CASE

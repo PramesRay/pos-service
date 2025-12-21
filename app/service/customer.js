@@ -1,6 +1,8 @@
 import { NotFoundException } from "../../exception/not.found.exception.js";
 import { Customer, User } from "../model/model.js";
-import { sequelize } from "../../infrastructure/database/mysql.js";
+import { getSequelize } from "../../infrastructure/database/mysql.js";
+
+const sequelize = await getSequelize();
 
 const create = async (customer) => {
   const tx = await sequelize.transaction();

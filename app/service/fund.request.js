@@ -1,4 +1,4 @@
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {
     Employee,
     FundRequest,
@@ -12,6 +12,8 @@ import { Op } from "sequelize";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
+
+const sequelize = await getSequelize();
 dayjs.extend(utc);
 dayjs.extend(timezone);
 

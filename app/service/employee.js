@@ -13,8 +13,10 @@ import shiftService from "./shift.js";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
-import { sequelize } from "../../infrastructure/database/mysql.js";
+import { getSequelize } from "../../infrastructure/database/mysql.js";
 import { Sequelize } from "sequelize";
+
+const sequelize = await getSequelize();
 
 const getOne = async (uid) => {
   // Cari employee berdasarkan UID

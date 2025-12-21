@@ -10,9 +10,11 @@ import {
     Category
 } from "../model/model.js";
 import {ConflictException} from "../../exception/conflict.exception.js";
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {NotFoundException} from "../../exception/not.found.exception.js";
 import {Op} from "sequelize";
+
+const sequelize = await getSequelize();
 
 const startEmployeeShift = async (authUser) => {
     const latestShift = await EmployeeShift.findOne({

@@ -10,7 +10,7 @@ import {
     RefundItem,
     User
 } from "../model/model.js";
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {Op, literal, Sequelize} from "sequelize";
 import {snap} from './midtrans.js';
 import {NotFoundException} from "../../exception/not.found.exception.js";
@@ -22,6 +22,7 @@ import tz from "dayjs/plugin/timezone.js";
 import { UnauthorizedException } from "../../exception/unauthorized.exception.js";
 import Crypto from "crypto";
 
+const sequelize = await getSequelize();
 dayjs.extend(utc);
 dayjs.extend(tz);
 const ZONE = "Asia/Jakarta";

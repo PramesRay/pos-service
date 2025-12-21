@@ -1,12 +1,13 @@
-import {CashierShiftCashIn, CashierShiftCashOut, Branch, OrderPayment, Order, RefundItem, OrderItem} from "../model/model.js";
+import {Branch, OrderPayment, Order, RefundItem, OrderItem} from "../model/model.js";
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc.js";
 import tz from "dayjs/plugin/timezone.js";
 import {Op, Sequelize} from "sequelize";
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {prefixId} from "../../util/util.js";
 import {NotFoundException} from "../../exception/not.found.exception.js";
 
+const sequelize = await getSequelize();
 dayjs.extend(utc);
 dayjs.extend(tz);
 

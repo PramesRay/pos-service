@@ -1,5 +1,7 @@
-import {sequelize} from "../../infrastructure/database/mysql.js";
+import {getSequelize} from "../../infrastructure/database/mysql.js";
 import {DataTypes} from "sequelize";
+
+const sequelize = await getSequelize();
 
 export const Branch = sequelize.define('branches', {
     id: {

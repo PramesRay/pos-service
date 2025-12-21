@@ -22,7 +22,15 @@ const rest = express();
 
 export const initServer = () => {
     rest.use(cors({
-        origin: ['http://localhost:5173', 'http://localhost:5174', 'https://internalposnurchs.up.railway.app', 'https://nurchs.up.railway.app'], // ganti dengan origin yang diizinkan
+        origin: [
+            'http://localhost:5173', 
+            'http://localhost:5174', 
+            'https://internalposnurchs.up.railway.app', 
+            'https://nurchs.up.railway.app',
+            'https://op-nurchs.vercel.app',
+            'https://nurchs.vercel.app'
+        ], 
+            // ganti dengan origin yang diizinkan
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         credentials: true
     }))
@@ -154,11 +162,6 @@ export const initServer = () => {
     rest.get('/finance-summary', financeSummaryHandler.fetchFinanceSummary)
 
     rest.use(errorMiddleware)
-}
 
-export const runServer = () => {
-    rest.listen(process.env.PORT, () => {
-        console.info("Server listening on port 3000");
-    })
+    return rest
 }
-
