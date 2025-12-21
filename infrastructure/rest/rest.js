@@ -18,10 +18,13 @@ import fundRequestHandler from "../../app/handler/fund.request.js";
 import reservationHandler from "../../app/handler/reservation.js";
 import financeSummaryHandler from "../../app/handler/finance.summary.js";
 
-const rest = express();
+let app;
 
 export const initServer = () => {
-    rest.use(cors({
+    if (app) return app;
+    app = express();
+
+    app.use(cors({
         origin: [
             'http://localhost:5173', 
             'http://localhost:5174', 
@@ -34,134 +37,134 @@ export const initServer = () => {
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         credentials: true
     }))
-    rest.use(express.json())
+    app.use(express.json())
 
-    rest.get('/health-check', (req, res) => {
+    app.get('/health-check', (req, res) => {
         res.status(200).json(successResponse("Server Health Check", "OK"));
     })
 
     // auth
-    rest.post('/auth/register', authHandler.register)
+    app.post('/auth/register', authHandler.register)
     
-    rest.get('/branch', branchHandler.getAll)
+    app.get('/branch', branchHandler.getAll)
     
-    rest.post('/customer', customerHandler.create)
-    rest.get('/customer/:id', customerHandler.getOne)
-    rest.put('/customer/:id', customerHandler.update)
+    app.post('/customer', customerHandler.create)
+    app.get('/customer/:id', customerHandler.getOne)
+    app.put('/customer/:id', customerHandler.update)
     
-    rest.get('/menu-sales', menuHandler.getSalesByBranch)
-    rest.get('/categories', categoryHandler.getAll)
-    rest.get('/category/:id', categoryHandler.getOne)
+    app.get('/menu-sales', menuHandler.getSalesByBranch)
+    app.get('/categories', categoryHandler.getAll)
+    app.get('/category/:id', categoryHandler.getOne)
 
-    rest.get("/orders/customer", orderHandler.fetchOrderList)
-    rest.post('/order/customer', orderHandler.createCustomerOrder)
-    rest.put('/order/customer/:id', orderHandler.updateOrder)
-    rest.post('/order/webhook', orderHandler.webhookUpdateOrderPayment)
+    app.get("/orders/customer", orderHandler.fetchOrderList)
+    app.post('/order/customer', orderHandler.createCustomerOrder)
+    app.put('/order/customer/:id', orderHandler.updateOrder)
+    app.post('/order/webhook', orderHandler.webhookUpdateOrderPayment)
 
-    rest.get('/reservations/customer', reservationHandler.fetchByCustomer)
-    rest.post('/reservation/customer', reservationHandler.createByCustomer)
-    rest.put('/reservation/customer/:id', reservationHandler.updateByCustomer)
+    app.get('/reservations/customer', reservationHandler.fetchByCustomer)
+    app.post('/reservation/customer', reservationHandler.createByCustomer)
+    app.put('/reservation/customer/:id', reservationHandler.updateByCustomer)
 
-    rest.use(authMiddleware)
+    app.use(authMiddleware)
 
     // employee
-    rest.get('/employees-activity', employeeHandler.attendanceSummaryAverages)
-    rest.get('/employee/me', employeeHandler.getOne)
-    rest.get('/employees', employeeHandler.getAll)
-    rest.put('/employee/:uid', employeeHandler.update)
-    rest.put('/employee-me', employeeHandler.updateMe)
-    rest.delete('/employee/:uid', employeeHandler.remove)
+    app.get('/employees-activity', employeeHandler.attendanceSummaryAverages)
+    app.get('/employee/me', employeeHandler.getOne)
+    app.get('/employees', employeeHandler.getAll)
+    app.put('/employee/:uid', employeeHandler.update)
+    app.put('/employee-me', employeeHandler.updateMe)
+    app.delete('/employee/:uid', employeeHandler.remove)
 
     // branch
-    rest.get('/branch/:id', branchHandler.getOne)
-    rest.post('/branch', branchHandler.create)
-    rest.put('/branch/:id', branchHandler.update)
-    rest.delete('/branch/:id', branchHandler.remove)
+    app.get('/branch/:id', branchHandler.getOne)
+    app.post('/branch', branchHandler.create)
+    app.put('/branch/:id', branchHandler.update)
+    app.delete('/branch/:id', branchHandler.remove)
 
     // menu
-    rest.get('/menu/:id', menuHandler.getOne)
-    rest.get('/menus', menuHandler.getAllByBranch)
-    rest.post('/menu', menuHandler.create)
-    rest.put('/menu/:id', menuHandler.update)
-    rest.delete('/menu/:id', menuHandler.remove)
+    app.get('/menu/:id', menuHandler.getOne)
+    app.get('/menus', menuHandler.getAllByBranch)
+    app.post('/menu', menuHandler.create)
+    app.put('/menu/:id', menuHandler.update)
+    app.delete('/menu/:id', menuHandler.remove)
 
     // employee shift
-    rest.get('/shift/employee/current', shiftHandler.getCurrentEmployeeShift)
-    rest.get('/shift/employees', shiftHandler.fetchEmployeeShifts)
-    rest.post('/shift/employee/start', shiftHandler.startEmployeeShift)
-    rest.put('/shift/employee/:id/end', shiftHandler.endEmployeeShift)
-    rest.put('/shift/employee/end', shiftHandler.endEmployeeShift)
+    app.get('/shift/employee/current', shiftHandler.getCurrentEmployeeShift)
+    app.get('/shift/employees', shiftHandler.fetchEmployeeShifts)
+    app.post('/shift/employee/start', shiftHandler.startEmployeeShift)
+    app.put('/shift/employee/:id/end', shiftHandler.endEmployeeShift)
+    app.put('/shift/employee/end', shiftHandler.endEmployeeShift)
 
     // kitchen shift
-    rest.get('/shift/kitchen/current', shiftHandler.getCurrentKitchenShift)
-    rest.get('/shift/kitchens', shiftHandler.fetchKitchenShifts)
-    rest.post('/shift/kitchen/:branchId/start', shiftHandler.startKitchenShift)
-    rest.put('/shift/kitchen/:id', shiftHandler.updateKitchenShift)
-    rest.put('/shift/kitchen/:id/end', shiftHandler.endKitchenShift)
+    app.get('/shift/kitchen/current', shiftHandler.getCurrentKitchenShift)
+    app.get('/shift/kitchens', shiftHandler.fetchKitchenShifts)
+    app.post('/shift/kitchen/:branchId/start', shiftHandler.startKitchenShift)
+    app.put('/shift/kitchen/:id', shiftHandler.updateKitchenShift)
+    app.put('/shift/kitchen/:id/end', shiftHandler.endKitchenShift)
 
     // cashier shift
-    rest.get('/shift/cashier/current', shiftHandler.getCurrentCashierShift)
-    rest.get('/shift/cashiers', shiftHandler.fetchCashierShifts)
-    rest.post('/shift/cashier/:branchId/start', shiftHandler.startCashierShift)
-    rest.put('/shift/cashier/:id', shiftHandler.updateCashierShift)
-    rest.put('/shift/cashier/:id/end', shiftHandler.endCashierShift)
+    app.get('/shift/cashier/current', shiftHandler.getCurrentCashierShift)
+    app.get('/shift/cashiers', shiftHandler.fetchCashierShifts)
+    app.post('/shift/cashier/:branchId/start', shiftHandler.startCashierShift)
+    app.put('/shift/cashier/:id', shiftHandler.updateCashierShift)
+    app.put('/shift/cashier/:id/end', shiftHandler.endCashierShift)
 
     // warehouse shift
-    rest.get('/shift/warehouse/current', shiftHandler.getCurrentWarehouseShift)
-    rest.get('/shift/warehouses', shiftHandler.fetchWarehouseShifts)
-    rest.post('/shift/warehouse/start', shiftHandler.startWarehouseShift)
-    rest.put('/shift/warehouse/:id', shiftHandler.updateWarehouseShift)
-    rest.put('/shift/warehouse/:id/end', shiftHandler.endWarehouseShift)
+    app.get('/shift/warehouse/current', shiftHandler.getCurrentWarehouseShift)
+    app.get('/shift/warehouses', shiftHandler.fetchWarehouseShifts)
+    app.post('/shift/warehouse/start', shiftHandler.startWarehouseShift)
+    app.put('/shift/warehouse/:id', shiftHandler.updateWarehouseShift)
+    app.put('/shift/warehouse/:id/end', shiftHandler.endWarehouseShift)
 
     // order
-    rest.get("/total-order", orderHandler.orderSummary)
-    rest.get("/orders", orderHandler.fetchOrderList)
-    rest.post('/order', orderHandler.createOrder)
-    rest.post('/order/process-direct-payment', orderHandler.createDirectPaymentOrder)
-    rest.put('/order/:id', orderHandler.updateOrder)
-    rest.put('/order/:id/refund', orderHandler.refundOrderItem)
+    app.get("/total-order", orderHandler.orderSummary)
+    app.get("/orders", orderHandler.fetchOrderList)
+    app.post('/order', orderHandler.createOrder)
+    app.post('/order/process-direct-payment', orderHandler.createDirectPaymentOrder)
+    app.put('/order/:id', orderHandler.updateOrder)
+    app.put('/order/:id/refund', orderHandler.refundOrderItem)
 
     // stock request
-    rest.get('/inventory/stock-requests', stockRequestHandler.fetchList)
-    rest.post('/inventory/stock-request', stockRequestHandler.create)
-    rest.put('/inventory/stock-request', stockRequestHandler.update)
-    rest.put('/inventory/stock-request/:id/ready', stockRequestHandler.ready)
-    rest.put('/inventory/stock-request/:id/end', stockRequestHandler.finish)
+    app.get('/inventory/stock-requests', stockRequestHandler.fetchList)
+    app.post('/inventory/stock-request', stockRequestHandler.create)
+    app.put('/inventory/stock-request', stockRequestHandler.update)
+    app.put('/inventory/stock-request/:id/ready', stockRequestHandler.ready)
+    app.put('/inventory/stock-request/:id/end', stockRequestHandler.finish)
 
     // stock movement
-    rest.get('/inventory/stock-movements', stockMovementHandler.fetchList)
-    rest.post('/inventory/stock-movement', stockMovementHandler.create)
-    rest.put('/inventory/stock-movement', stockMovementHandler.update)
-    rest.delete('/inventory/stock-movement/:id', stockMovementHandler.del)
+    app.get('/inventory/stock-movements', stockMovementHandler.fetchList)
+    app.post('/inventory/stock-movement', stockMovementHandler.create)
+    app.put('/inventory/stock-movement', stockMovementHandler.update)
+    app.delete('/inventory/stock-movement/:id', stockMovementHandler.del)
 
     // inventory item
-    rest.get('/inventory/items', inventoryItemHandler.fetchList)
-    rest.post('/inventory/item', inventoryItemHandler.create)
-    rest.put('/inventory/item', inventoryItemHandler.update)
-    rest.delete('/inventory/item/:id', inventoryItemHandler.del)
+    app.get('/inventory/items', inventoryItemHandler.fetchList)
+    app.post('/inventory/item', inventoryItemHandler.create)
+    app.put('/inventory/item', inventoryItemHandler.update)
+    app.delete('/inventory/item/:id', inventoryItemHandler.del)
 
     // category
-    rest.post('/category', categoryHandler.create)
-    rest.put('/category/:id', categoryHandler.update)
-    rest.delete('/category/:id', categoryHandler.remove)
+    app.post('/category', categoryHandler.create)
+    app.put('/category/:id', categoryHandler.update)
+    app.delete('/category/:id', categoryHandler.remove)
 
     // fund request
-    rest.get('/finance/fund-requests', fundRequestHandler.fetchList)
-    rest.post('/finance/fund-request', fundRequestHandler.create)
-    rest.put('/finance/fund-request', fundRequestHandler.update)
-    rest.put('/finance/fund-request/:id/end', fundRequestHandler.finish)
-    rest.delete('/finance/fund-request/:id', fundRequestHandler.del)
+    app.get('/finance/fund-requests', fundRequestHandler.fetchList)
+    app.post('/finance/fund-request', fundRequestHandler.create)
+    app.put('/finance/fund-request', fundRequestHandler.update)
+    app.put('/finance/fund-request/:id/end', fundRequestHandler.finish)
+    app.delete('/finance/fund-request/:id', fundRequestHandler.del)
 
     // reservation /reservation
-    rest.get('/reservations', reservationHandler.fetchList)
-    rest.post('/reservation', reservationHandler.create)
-    rest.put('/reservation', reservationHandler.update)
-    rest.delete('/reservation/:id', reservationHandler.del)
+    app.get('/reservations', reservationHandler.fetchList)
+    app.post('/reservation', reservationHandler.create)
+    app.put('/reservation', reservationHandler.update)
+    app.delete('/reservation/:id', reservationHandler.del)
 
     // finance summary
-    rest.get('/finance-summary', financeSummaryHandler.fetchFinanceSummary)
+    app.get('/finance-summary', financeSummaryHandler.fetchFinanceSummary)
 
-    rest.use(errorMiddleware)
+    app.use(errorMiddleware)
 
-    return rest
+    return app
 }
