@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import mysql2 from 'mysql2'
 import config from "../../app/config/config.js";
 
 let sequelize;
@@ -8,6 +9,7 @@ export const getSequelize = async () => {
     sequelize = config.db_url
       ? new Sequelize(config.db_url, {
           dialect: config.dialect,
+          dialectModule: mysql2,
           dialectOptions: { timeout: 10000 },
           retry: { max: 5 }
         })
@@ -15,6 +17,7 @@ export const getSequelize = async () => {
           host: config.host,
           port: config.port,
           dialect: config.dialect,
+          dialectModule: mysql2,
           dialectOptions: { timeout: 10000 },
           retry: { max: 3 }
         });
