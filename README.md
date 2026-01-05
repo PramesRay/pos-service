@@ -81,14 +81,28 @@ This backend was built with the following goals in mind:
 
 
 ## Project Structure
-```sh
+```bash
 pos-service/
-├── app/             # Application layer (models, services)
-├── src/             # REST routes & controllers
-├── infrastructure/  # Database & external service configuration
-├── middleware/      # Auth & role-based middleware
-├── package.json
-└── README.md
+├── app
+│   ├── config          # Application & environment configuration
+│   ├── handler         # HTTP request handlers (controllers)
+│   ├── model           # Database models & ORM definitions
+│   ├── service         # Business logic layer
+│   └── app.js          # Express app initialization
+├── cmd               # Application entry point & server bootstrap
+├── exception         # Custom error classes & exception handling
+├── infrastructure
+│   ├── database        # Database connection & ORM setup
+│   └── rest            # External REST clients / integrations
+├── middleware
+│   ├── auth.js         # Authentication & authorization middleware
+│   └── error.js        # Global error handling middleware
+├── src
+│   └── index.js        # Main runtime entry (server startup)
+├── util              # Shared utilities & helper functions
+├── package.json      # Project metadata & dependencies
+├── README.md         # Project documentation
+└── .gitignore        # Ignored files & directories
 ```
 
 ### Architectural Principles
@@ -170,19 +184,54 @@ Main entities managed by the system include:
 Create a `.env` file with the following configuration:
 
 ```env
-PORT=your_preference_port
+# ===============================
+# Application Configuration
+# ===============================
+NODE_ENV=development (other: local or production)
+PORT=3000
 
-DB_HOST=your_db_host
-DB_USER=your_db_username
-DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
+# ===============================
+# Database Configuration (Default)
+# ===============================
+DB_DIALECT=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASS=your_database_password
 
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_CLIENT_EMAIL=your_client_email
-FIREBASE_PRIVATE_KEY=your_private_key
+# ===============================
+# Database Configuration (Development)
+# ===============================
+DEV_DB_HOST=localhost
+DEV_DB_PORT=3306
+DEV_DB_NAME=your_dev_database_name
+DEV_DB_USER=root
+DEV_DB_PASS=your_dev_database_password
+DEV_DB_URL=mysql://user:password@localhost:3306/db_name
 
-MIDTRANS_SERVER_KEY=your_midtrans_server_key
+# ===============================
+# Database Configuration (Production / Railway)
+# ===============================
+PROD_DB_HOST=your_production_db_host
+PROD_DB_PORT=3306
+PROD_DB_NAME=your_production_db_name
+PROD_DB_PASS=your_production_db_password
+PROD_DB_URL=mysql://user:password@host:3306/db_name
+RAILWAY_PROD_DB_USER=your_railway_database_user
+
+# ===============================
+# Firebase Admin SDK
+# ===============================
+FIREBASE_SERVICE_ACCOUNT_KEY_JSON=your_firebase_service_account_json
+
+# ===============================
+# Midtrans Payment Gateway
+# ===============================
 MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+MIDTRANS_SERVER_KEY=your_midtrans_server_key
+MIDTRANS_MERCHANT_ID=your_midtrans_merchant_id
+MIDTRANS_IS_PRODUCTION=false
 ```
 ⚠️ Do not commit sensitive credentials to the repository
 
